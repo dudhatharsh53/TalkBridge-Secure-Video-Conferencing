@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
     providedIn: 'root'
 })
 export class AdminService {
-    private apiUrl = 'http://localhost:5000/api/admin';
+    private apiUrl = 'https://video-conference-api.onrender.com/api/admin';
 
     constructor(private http: HttpClient) { }
 

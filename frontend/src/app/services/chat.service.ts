@@ -8,11 +8,11 @@ import { io, Socket } from 'socket.io-client';
     providedIn: 'root'
 })
 export class ChatService {
-    private readonly apiUrl = 'http://localhost:5000/api/chat';
+    private readonly apiUrl = 'https://video-conference-api.onrender.com/api/chat';
     private socket: Socket;
 
     constructor(private http: HttpClient, private authService: AuthService) {
-        this.socket = io('http://localhost:5000');
+        this.socket = io('https://video-conference-api.onrender.com');
 
         // Automatically register if user exists
         if (this.authService.isLoggedIn()) {

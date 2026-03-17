@@ -7,7 +7,7 @@ import { AuthService } from './auth.service';
     providedIn: 'root'
 })
 export class NotificationService {
-    private readonly apiUrl = 'http://localhost:5000/api/notifications';
+    private readonly apiUrl = 'https://video-conference-api.onrender.com/api/notifications';
 
     constructor(private http: HttpClient, private authService: AuthService) { }
 

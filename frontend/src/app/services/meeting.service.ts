@@ -7,7 +7,7 @@ import { AuthService } from './auth.service';
     providedIn: 'root'
 })
 export class MeetingService {
-    private readonly apiUrl = 'http://localhost:5000/api/meet';
+    private readonly apiUrl = 'https://video-conference-api.onrender.com/api/meet';
 
     constructor(private http: HttpClient, private authService: AuthService) { }
 

@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
     providedIn: 'root'
 })
 export class InvitationService {
-    private readonly apiUrl = 'http://localhost:5000/api/invitations';
+    private readonly apiUrl = 'https://video-conference-api.onrender.com/api/invitations';
 
     constructor(private http: HttpClient) { }
 

@@ -7,7 +7,7 @@ import { Router } from '@angular/router';
     providedIn: 'root'
 })
 export class AuthService {
-    private readonly apiUrl = 'http://localhost:5000/api/auth';
+    private readonly apiUrl = 'https://video-conference-api.onrender.com/api/auth';
 
     private userSignal = signal<any>(null);
     user = computed(() => this.userSignal());

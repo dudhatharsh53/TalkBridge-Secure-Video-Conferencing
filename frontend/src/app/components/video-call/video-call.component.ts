@@ -256,7 +256,7 @@ export class VideoCallComponent implements OnInit, OnDestroy {
     }
 
     initSocketOnly() {
-        this.socket = io('http://localhost:5000');
+        this.socket = io('https://video-conference-api.onrender.com');
 
         this.socket.on('access-granted', () => {
             this.accessStatus.set('granted');
@@ -306,7 +306,7 @@ export class VideoCallComponent implements OnInit, OnDestroy {
 
     initSocket() {
         if (!this.socket) {
-            this.socket = io('http://localhost:5000');
+            this.socket = io('https://video-conference-api.onrender.com');
         }
 
         this.socket.emit('join-room', {
