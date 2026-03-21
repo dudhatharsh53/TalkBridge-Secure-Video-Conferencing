@@ -8,6 +8,7 @@ import { AuthService } from '../../services/auth.service';
 import { MeetingService } from '../../services/meeting.service';
 import { ChatService } from '../../services/chat.service';
 import { ToastService } from '../../services/toast.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
     selector: 'app-video-call',
@@ -256,7 +257,7 @@ export class VideoCallComponent implements OnInit, OnDestroy {
     }
 
     initSocketOnly() {
-        this.socket = io('https://video-conference-api.onrender.com');
+        this.socket = io(environment.socketUrl);
 
         this.socket.on('access-granted', () => {
             this.accessStatus.set('granted');
@@ -306,7 +307,7 @@ export class VideoCallComponent implements OnInit, OnDestroy {
 
     initSocket() {
         if (!this.socket) {
-            this.socket = io('https://video-conference-api.onrender.com');
+            this.socket = io(environment.socketUrl);
         }
 
         this.socket.emit('join-room', {

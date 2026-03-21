@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
+import { environment } from '../../environments/environment';
 
 @Injectable({
     providedIn: 'root'
 })
 export class MeetingService {
-    private readonly apiUrl = 'https://video-conference-api.onrender.com/api/meet';
+    private readonly apiUrl = `${environment.apiUrl}/meet`;
 
     constructor(private http: HttpClient, private authService: AuthService) { }
 

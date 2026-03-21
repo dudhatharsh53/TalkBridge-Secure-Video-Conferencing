@@ -3,16 +3,17 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
 import { io, Socket } from 'socket.io-client';
+import { environment } from '../../environments/environment';
 
 @Injectable({
     providedIn: 'root'
 })
 export class ChatService {
-    private readonly apiUrl = 'https://video-conference-api.onrender.com/api/chat';
+    private readonly apiUrl = `${environment.apiUrl}/chat`;
     private socket: Socket;
 
     constructor(private http: HttpClient, private authService: AuthService) {
-        this.socket = io('https://video-conference-api.onrender.com');
+        this.socket = io(environment.socketUrl);
 
         // Automatically register if user exists
         if (this.authService.isLoggedIn()) {
