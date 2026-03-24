@@ -1,5 +1,5 @@
 export const environment = {
   production: false,
-  apiUrl: 'https://video-conference-api.onrender.com/api',
-  socketUrl: 'https://video-conference-api.onrender.com'
+  apiUrl: 'https://talkbridge-secure-video-conferencing.onrender.com/api',
+  socketUrl: 'https://talkbridge-secure-video-conferencing.onrender.com'
 };
