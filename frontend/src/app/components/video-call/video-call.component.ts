@@ -68,7 +68,7 @@ import { environment } from '../../../environments/environment';
           </div>
           
           <!-- Remote Videos -->
-          <div *ngFor="let peer of peers()" class="video-item">
+          <div *ngFor="let peer of peers" class="video-item">
             <video [id]="peer.peerID" [hidden]="!peer.videoEnabled" autoplay playsinline></video>
             <div *ngIf="!peer.videoEnabled" class="avatar-placeholder" [style.background]="getUserColor(peer.userName)">
               {{ peer.userName?.charAt(0) }}
@@ -162,7 +162,7 @@ export class VideoCallComponent implements OnInit, OnDestroy {
     meetingTitle = signal('Meeting');
     socket!: Socket;
     stream!: MediaStream;
-    peers = signal<any[]>([]);
+    peers: any[] = [];
     peersRefs: any[] = [];
 
     // Controls
@@ -340,16 +340,13 @@ export class VideoCallComponent implements OnInit, OnDestroy {
                     peerID: user.socketId,
                     peer,
                     userName: user.userName,
-                    videoEnabled: true,
-                    audioEnabled: true
+                    videoEnabled: true
                 });
-                this.peers.update(prev => [...prev, {
+                this.peers.push({
                     peerID: user.socketId,
                     userName: user.userName,
-                    videoEnabled: true,
-                    audioEnabled: true,
-                    stream: null
-                }]);
+                    videoEnabled: true
+                });
             });
         });
 
@@ -362,16 +359,13 @@ export class VideoCallComponent implements OnInit, OnDestroy {
                 peerID: payload.callerId,
                 peer,
                 userName: payload.userName,
-                videoEnabled: true,
-                audioEnabled: true
+                videoEnabled: true
             });
-            this.peers.update(prev => [...prev, {
+            this.peers.push({
                 peerID: payload.callerId,
                 userName: payload.userName,
-                videoEnabled: true,
-                audioEnabled: true,
-                stream: null
-            }]);
+                videoEnabled: true
+            });
         });
 
         this.socket.on('receiving-returned-signal', (payload: any) => {
@@ -383,7 +377,7 @@ export class VideoCallComponent implements OnInit, OnDestroy {
             const peerObj = this.peersRefs.find(p => p.peerID === id);
             if (peerObj) peerObj.peer.destroy();
             this.peersRefs = this.peersRefs.filter(p => p.peerID !== id);
-            this.peers.update(prev => prev.filter(p => p.peerID !== id));
+            this.peers = this.peers.filter(p => p.peerID !== id);
         });
 
         this.socket.on('new-message', (msg: any) => {
@@ -392,17 +386,10 @@ export class VideoCallComponent implements OnInit, OnDestroy {
             setTimeout(() => this.scrollToBottom(), 100);
         });
 
-        // Listen for video toggle from others
+        // Listen for video toggle from others (placeholder for more advanced sync)
         this.socket.on('peer-video-toggle', ({ socketId, enabled }: any) => {
-            this.peers.update(prev => prev.map(p =>
-                p.peerID === socketId ? { ...p, videoEnabled: enabled } : p
-            ));
-        });
-
-        this.socket.on('peer-audio-toggle', ({ socketId, enabled }: any) => {
-            this.peers.update(prev => prev.map(p =>
-                p.peerID === socketId ? { ...p, audioEnabled: enabled } : p
-            ));
+            const peer = this.peers.find(p => p.peerID === socketId);
+            if (peer) peer.videoEnabled = enabled;
         });
     }
 
@@ -413,10 +400,9 @@ export class VideoCallComponent implements OnInit, OnDestroy {
             this.socket.emit('sending-offer', { userToSignal, callerId, signal, userName: this.authService.user().name });
         });
 
-        peer.on('stream', remoteStream => {
-            this.peers.update(prev => prev.map(p =>
-                p.peerID === userToSignal ? { ...p, stream: remoteStream } : p
-            ));
+        peer.on('stream', stream => {
+            const video = document.getElementById(userToSignal) as HTMLVideoElement;
+            if (video) video.srcObject = stream;
         });
 
         return peer;
@@ -429,10 +415,9 @@ export class VideoCallComponent implements OnInit, OnDestroy {
             this.socket.emit('returning-signal', { signal, callerId });
         });
 
-        peer.on('stream', remoteStream => {
-            this.peers.update(prev => prev.map(p =>
-                p.peerID === callerId ? { ...p, stream: remoteStream } : p
-            ));
+        peer.on('stream', stream => {
+            const video = document.getElementById(callerId) as HTMLVideoElement;
+            if (video) video.srcObject = stream;
         });
 
         peer.signal(incomingSignal);
@@ -442,7 +427,6 @@ export class VideoCallComponent implements OnInit, OnDestroy {
     toggleAudio() {
         this.audioEnabled = !this.audioEnabled;
         if (this.stream) this.stream.getAudioTracks().forEach(track => track.enabled = this.audioEnabled);
-        this.socket.emit('audio-toggle', { enabled: this.audioEnabled });
     }
 
     toggleVideo() {
@@ -497,13 +481,11 @@ export class VideoCallComponent implements OnInit, OnDestroy {
         this.newMessage = '';
     }
 
-    getUserColor(name: any = ''): string {
-        if (!name) return '#3b82f6';
+    getUserColor(name: string = ''): string {
         const colors = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899'];
         let hash = 0;
-        const nameStr = String(name);
-        for (let i = 0; i < nameStr.length; i++) {
-            hash = nameStr.charCodeAt(i) + ((hash << 5) - hash);
+        for (let i = 0; i < name.length; i++) {
+            hash = name.charCodeAt(i) + ((hash << 5) - hash);
         }
         return colors[Math.abs(hash) % colors.length];
     }
