@@ -40,7 +40,7 @@ import { environment } from '../../../environments/environment';
           <div *ngFor="let req of joinRequests()" class="card-request" style="margin-bottom: 0.5rem; background: rgba(255, 255, 255, 0.95); padding: 1rem; border-radius: 1rem; box-shadow: 0 10px 20px rgba(0,0,0,0.2);">
             <p style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.75rem; color: #1e293b;">{{ req.userName }} wants to join</p>
             <div style="display: flex; gap: 0.5rem;">
-              <button (click)="acceptParticipant(req.socketId)" class="btn-success" style="flex: 1; border: none; padding: 0.5rem; border-radius: 0.5rem; color: white; cursor: pointer;">Admit</button>
+              <button (click)="acceptParticipant(req.socketId)" class="btn-success" style="flex: 1; background: #3c9948ff; border: none; padding: 0.5rem; border-radius: 0.5rem; color: white; cursor: pointer;">Accept</button>
               <button (click)="rejectParticipant(req.socketId)" class="btn-danger" style="flex: 1; border: none; padding: 0.5rem; border-radius: 0.5rem; color: white; cursor: pointer;">Decline</button>
             </div>
           </div>
@@ -85,13 +85,13 @@ import { environment } from '../../../environments/environment';
           <button (click)="toggleAudio()" [class.off]="!audioEnabled" class="control-btn" [title]="audioEnabled ? 'Mute' : 'Unmute'">
             <span>{{ audioEnabled ? '🎤' : '🔇' }}</span>
           </button>
-          <button (click)="toggleVideo()" [class.off]="!videoEnabled" class="control-btn" [title]="videoEnabled ? 'Stop Video' : 'Start Video'">
+          <button (click)="toggleVideo()" [class.off]="!videoEnabled" class="control-btn" [title]="videoEnabled ? 'OFF Camera' : 'ON Camera'">
              <span>{{ videoEnabled ? '📹' : '📵' }}</span>
           </button>
           <button (click)="toggleScreenShare()" [class.active]="isScreenSharing" class="control-btn" title="Share Screen">
              <span>🖥️</span>
           </button>
-           <button (click)="toggleChat()" [class.active]="showChat" class="control-btn" title="Toggle Chat">
+           <button (click)="toggleChat()" [class.active]="showChat" class="control-btn" title="Meeting Chat">
              <span>💬</span>
              <span *ngIf="unreadCount() > 0" class="notif-dot"></span>
           </button>
@@ -351,6 +351,9 @@ export class VideoCallComponent implements OnInit, OnDestroy {
         });
 
         this.socket.on('user-joined', (payload: any) => {
+            if (payload.userName && !payload.signal) {
+                this.toastService.info(`${payload.userName} joined the meeting`);
+            }
             const peer = this.addPeer(payload.signal, payload.callerId, this.stream, payload.userName);
             this.peersRefs.push({
                 peerID: payload.callerId,

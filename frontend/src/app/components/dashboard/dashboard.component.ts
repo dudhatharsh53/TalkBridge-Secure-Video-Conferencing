@@ -100,13 +100,12 @@ import { NotificationService } from '../../services/notification.service';
                <h3>Recent Messages</h3>
                <div class="chat-brief-list">
                  <div *ngFor="let chat of chattedUsers() | slice:0:3" (click)="openPrivateChat(chat.user._id)" class="brief-chat-item">
-                    <div class="brief-avatar" [style.background]="getUserColor(chat.user.name)">{{ chat.user.name.charAt(0) }}</div>
+                    <div class="brief-avatar" [style.background]="getUserColor(chat.user.name)">{{ chat.user.name }}</div>
                     <div class="brief-details">
                       <div class="name-time">
-                        <span class="brief-name">{{ chat.user.name }}</span>
+                      <p class="brief-last">{{ chat.lastMessage }}</p>
                         <span class="brief-time">{{ (chat.lastMessageTime || chat.timestamp) | date:'shortTime' }}</span>
                       </div>
-                      <p class="brief-last">{{ chat.lastMessage }}</p>
                     </div>
                  </div>
                  <div *ngIf="chattedUsers().length === 0" class="empty-mini">No recent messages</div>
@@ -166,11 +165,11 @@ import { NotificationService } from '../../services/notification.service';
                  <p class="m-desc">Enter a meeting ID to join an ongoing session immediately.</p>
                  <div class="m-form">
                     <div class="m-field">
-                       <label>Meeting identifier (UUID)</label>
+                       <label>Meeting identifier (ID)</label>
                        <input type="text" [(ngModel)]="joinMtgId" placeholder="Paste ID here...">
                     </div>
                     <button (click)="joinMeeting()" [disabled]="!joinMtgId" class="btn-join-now">
-                       Enter Meeting
+                       Join Meeting
                     </button>
                  </div>
                </div>
@@ -184,7 +183,8 @@ import { NotificationService } from '../../services/notification.service';
                 <table>
                   <thead>
                     <tr>
-                      <th>Meeting Info</th>
+                      <th>ID</th>
+                      <th>Title</th>
                       <th>Host</th>
                       <th>Scheduled / Held At</th>
                       <th>Status</th>
@@ -193,11 +193,9 @@ import { NotificationService } from '../../services/notification.service';
                   </thead>
                   <tbody>
                     <tr *ngFor="let mtg of history()">
-                      <td>
-                        <div class="mtg-title">{{ mtg.title || 'Untitled Meeting' }}</div>
-                        <code class="mtg-id-badge">{{ mtg.meetingId }}</code>
-                      </td>
-                      <td>{{ mtg.createdBy?.name || 'You' }}</td>
+                      <td>{{ mtg.meetingId }}</td>
+                      <td>{{ mtg.title || '' }}</td>
+                      <td>{{ mtg.createdBy?.name || '' }}</td>
                       <td>{{ mtg.startTime | date:'medium' }}</td>
                       <td>
                         <span class="pill" [class.success]="mtg.status==='active'" [class.muted]="mtg.status==='ended'">
@@ -302,14 +300,14 @@ import { NotificationService } from '../../services/notification.service';
                         <input type="email" [(ngModel)]="inviteEmail" (input)="searchUsers()" placeholder="Search email...">
                         <div class="search-popover card shadow-2xl" *ngIf="searchResults().length > 0">
                           <div *ngFor="let u of searchResults()" (click)="selectUser(u.email)" class="popover-item">
-                            <span class="p-name">{{ u.name }}</span>
+                            <span class="p-name">{{ u.name }}</span> -
                             <span class="p-email">{{ u.email }}</span>
                           </div>
                         </div>
                      </div>
                    </div>
                    <button (click)="sendInvitation()" class="btn-brand w-full mt-4" [disabled]="!inviteRoomId || !inviteEmail">
-                     Dispatch Invitation
+                     Send Invitation
                    </button>
                  </div>
                </div>
@@ -341,7 +339,7 @@ import { NotificationService } from '../../services/notification.service';
           <div *ngSwitchCase="'notifications'" class="notifications-view animate-fade">
              <div class="view-header">
                <h2>Announcements</h2>
-               <button (click)="markAllRead()" class="btn-text">Clear all</button>
+               <button (click)="markAllRead()" class="btn-clear-all">Clear all</button>
              </div>
              <div class="notif-list mt-4">
                 <div *ngFor="let n of notifications()" class="card notif-row" [class.new]="!n.isRead" (click)="handleNotifClick(n)">
@@ -361,7 +359,7 @@ import { NotificationService } from '../../services/notification.service';
 
         </div>
 
-        <footer class="legal-footer mt-5">
+        <footer class="legal-footer">
            <hr>
            <p>TalkBridge &copy; 2024. All rights reserved.</p>
         </footer>
@@ -424,6 +422,8 @@ import { NotificationService } from '../../services/notification.service';
     .user-brief { display: flex; flex-direction: column; line-height: 1.2; overflow: hidden; }
     .user-brief .name { font-size: 0.85rem; font-weight: 700; color: #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .user-brief .role { font-size: 0.7rem; color: #64748b; text-transform: uppercase; }
+    .view-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;}
+    .legal-footer { margin-top: 5px; }
 
     /* Main Area */
     .dashboard-main { flex: 1; margin-left: 260px; padding: 2.5rem 3.5rem; min-height: 100vh; }
@@ -501,16 +501,16 @@ import { NotificationService } from '../../services/notification.service';
     table { width: 100%; border-collapse: collapse; min-width: 700px; }
     th { text-align: left; padding: 1.2rem; background: #f8fafc; color: #64748b; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
     td { padding: 1.2rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
-    .mtg-title { font-weight: 700; color: #0f172a; font-size: 1rem; }
     .pill { display: inline-block; padding: 0.3rem 0.8rem; border-radius: 2rem; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
     .pill.success { background: #dcfce7; color: #166534; }
-    .pill.muted { background: #f1f5f9; color: #64748b; }
+    .pill.muted { background: #e6e6e6ff; color: #37404dff; }
     .btn-primary-sm { background: #3b82f6; color: white; padding: 0.5rem 1.2rem; border-radius: 0.6rem; border: none; font-weight: 700; cursor: pointer; }
 
     /* Modals */
     .modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 2000; animation: fadeInDim 0.3s ease; }
     .modal { width: 90%; max-width: 500px; padding: 2.5rem; background: #ffffff !important; color: #0f172a !important; border-radius: 1.5rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
-    .modal-head h2 { margin: 0; font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; color: #0f172a !important; }
+    .modal-head h2 { margin: 0; font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; color: #0f172a !important;}
+    .modal-head { display: flex; justify-content: space-between; }
     .modal-desc { color: #475569 !important; margin: 0.5rem 0 1.5rem; font-size: 1.1rem; }
     .modal-label { display: block; font-size: 0.9rem; font-weight: 700; color: #334155 !important; margin-bottom: 0.6rem; }
     .modal-input { width: 100%; padding: 0.9rem 1.2rem; border: 2px solid #e2e8f0; border-radius: 0.8rem; font-size: 1.1rem; background: #f8fafc; color: #0f172a !important; outline: none; transition: 0.2s; }
@@ -527,8 +527,15 @@ import { NotificationService } from '../../services/notification.service';
     .btn-brand { background: #3b82f6; color: white; border: none; padding: 1rem 2rem; border-radius: 1rem; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3); }
     .btn-brand:hover { background: #2563eb; transform: translateY(-2px); }
     .btn-primary { background: #0f172a; color: white; border: none; padding: 0.9rem 1.8rem; border-radius: 1rem; font-weight: 700; cursor: pointer; }
-    .btn-text { background: none; border: none; color: #3b82f6; font-weight: 700; font-size: 0.9rem; cursor: pointer; padding: 0.5rem; }
-    .w-full { width: 100%; }
+    .btn-text { background: #f5f5f5; border: none; color: #3b82f6; font-weight: 700; font-size: 0.9rem; cursor: pointer; padding: 0.5rem; margin-top: 10px; margin-left: -5px;}
+    .btn-clear-all { background: #eaeaea; border: none; color: #3b82f6; font-weight: 700; font-size: 0.9rem; cursor: pointer; padding: 0.5rem; }
+    .w-full { width: 100%;margin-top: 1rem; }
+    .name-time { display: flex; justify-content: space-between; align-items: center; }
+    .actions { display: flex; gap: 5px;}
+    .btn-approve { background: #1f914bff; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; }
+    .btn-deny { background: #da3c3c; border: none; color: white; font-weight: 700; font-size: 0.9rem; cursor: pointer; padding: 0.5rem; }
+    .popover-item { display: flex; gap: 7px;}
+
 
     /* Invitation Items */
     .request-row { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid #f1f5f9; }
@@ -536,7 +543,7 @@ import { NotificationService } from '../../services/notification.service';
     .status-indicator { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; padding: 0.1rem 0.4rem; border-radius: 4px; display: inline-block; margin-left: 0.5rem; }
     .status-indicator.accepted { background: #dcfce7; color: #166534; }
     .status-indicator.rejected { background: #fee2e2; color: #991b1b; }
-    .status-indicator.pending { background: #fef3c7; color: #92400e; }
+    .status-indicator.pending { background: #fef3c7; color: #ff9148ff; }
 
     .mini-status-chip { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; padding: 0.1rem 0.3rem; border-radius: 3px; }
     .mini-status-chip.accepted { color: #166534; }

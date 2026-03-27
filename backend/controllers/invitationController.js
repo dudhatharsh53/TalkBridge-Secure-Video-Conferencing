@@ -8,12 +8,6 @@ exports.sendInvitation = async (req, res) => {
         const senderId = req.user.id;
         const lowerEmail = receiverEmail.toLowerCase();
 
-        // Check if invitation already exists for this meeting
-        const existingInvitation = await Invitation.findOne({ meetingId, receiverEmail: lowerEmail });
-        if (existingInvitation) {
-            return res.status(400).json({ message: 'Invitation already sent to this email' });
-        }
-
         // Check if receiver exists as a registered user
         const receiver = await User.findOne({ email: lowerEmail });
 
