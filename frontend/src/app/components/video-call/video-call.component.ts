@@ -68,7 +68,7 @@ import { environment } from '../../../environments/environment';
           </div>
           
           <!-- Remote Videos -->
-          <div *ngFor="let peer of peers" class="video-item">
+          <div *ngFor="let peer of peers()" class="video-item">
             <video [id]="peer.peerID" [hidden]="!peer.videoEnabled" autoplay playsinline></video>
             <div *ngIf="!peer.videoEnabled" class="avatar-placeholder" [style.background]="getUserColor(peer.userName)">
               {{ peer.userName?.charAt(0) }}
