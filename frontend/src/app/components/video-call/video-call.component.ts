@@ -335,6 +335,9 @@ export class VideoCallComponent implements OnInit, OnDestroy {
 
         this.socket.on('all-users', (users: any[]) => {
             users.forEach(user => {
+                if (this.peers.find(p => p.peerID === user.socketId)) {
+                    return;
+                }
                 const peer = this.createPeer(user.socketId, this.socket.id || '', this.stream, user.userName);
                 this.peersRefs.push({
                     peerID: user.socketId,
@@ -351,8 +354,38 @@ export class VideoCallComponent implements OnInit, OnDestroy {
         });
 
         this.socket.on('user-joined', (payload: any) => {
-            if (payload.userName && !payload.signal) {
+            if (this.peers.find(p => p.peerID === payload.socketId)) {
+                return;
+            }
+
+            if (payload.userName) {
                 this.toastService.info(`${payload.userName} joined the meeting`);
+            }
+
+            const peer = this.createPeer(
+                payload.socketId,
+                this.socket.id || '',
+                this.stream,
+                payload.userName
+            );
+
+            this.peersRefs.push({
+                peerID: payload.socketId,
+                peer,
+                userName: payload.userName,
+                videoEnabled: true
+            });
+
+            this.peers.push({
+                peerID: payload.socketId,
+                userName: payload.userName,
+                videoEnabled: true
+            });
+        });
+
+        this.socket.on('receiving-offer', (payload: any) => {
+            if (this.peers.find(p => p.peerID === payload.callerId)) {
+                return;
             }
             const peer = this.addPeer(payload.signal, payload.callerId, this.stream, payload.userName);
             this.peersRefs.push({
@@ -401,8 +434,10 @@ export class VideoCallComponent implements OnInit, OnDestroy {
         });
 
         peer.on('stream', stream => {
-            const video = document.getElementById(userToSignal) as HTMLVideoElement;
-            if (video) video.srcObject = stream;
+            setTimeout(() => {
+                const video = document.getElementById(userToSignal) as HTMLVideoElement;
+                if (video) video.srcObject = stream;
+            }, 500);
         });
 
         return peer;

@@ -140,7 +140,7 @@ io.on('connection', (socket) => {
 
     // Signaling
     socket.on('sending-offer', (payload) => {
-        io.to(payload.userToSignal).emit('user-joined', {
+        io.to(payload.userToSignal).emit('receiving-offer', {
             signal: payload.signal,
             callerId: payload.callerId,
             userName: payload.userName
