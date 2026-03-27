@@ -40,7 +40,7 @@ import { environment } from '../../../environments/environment';
           <div *ngFor="let req of joinRequests()" class="card-request" style="margin-bottom: 0.5rem; background: rgba(255, 255, 255, 0.95); padding: 1rem; border-radius: 1rem; box-shadow: 0 10px 20px rgba(0,0,0,0.2);">
             <p style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.75rem; color: #1e293b;">{{ req.userName }} wants to join</p>
             <div style="display: flex; gap: 0.5rem;">
-              <button (click)="acceptParticipant(req.socketId)" class="btn-success" style="flex: 1; border: none; padding: 0.5rem; border-radius: 0.5rem; color: white; cursor: pointer;">Admit</button>
+              <button (click)="acceptParticipant(req.socketId)" class="btn-success" style="flex: 1; background: #3c9948ff; border: none; padding: 0.5rem; border-radius: 0.5rem; color: white; cursor: pointer;">Accept</button>
               <button (click)="rejectParticipant(req.socketId)" class="btn-danger" style="flex: 1; border: none; padding: 0.5rem; border-radius: 0.5rem; color: white; cursor: pointer;">Decline</button>
             </div>
           </div>
@@ -85,13 +85,13 @@ import { environment } from '../../../environments/environment';
           <button (click)="toggleAudio()" [class.off]="!audioEnabled" class="control-btn" [title]="audioEnabled ? 'Mute' : 'Unmute'">
             <span>{{ audioEnabled ? '🎤' : '🔇' }}</span>
           </button>
-          <button (click)="toggleVideo()" [class.off]="!videoEnabled" class="control-btn" [title]="videoEnabled ? 'Stop Video' : 'Start Video'">
+          <button (click)="toggleVideo()" [class.off]="!videoEnabled" class="control-btn" [title]="videoEnabled ? 'OFF Camera' : 'ON Camera'">
              <span>{{ videoEnabled ? '📹' : '📵' }}</span>
           </button>
           <button (click)="toggleScreenShare()" [class.active]="isScreenSharing" class="control-btn" title="Share Screen">
              <span>🖥️</span>
           </button>
-           <button (click)="toggleChat()" [class.active]="showChat" class="control-btn" title="Toggle Chat">
+           <button (click)="toggleChat()" [class.active]="showChat" class="control-btn" title="Meeting Chat">
              <span>💬</span>
              <span *ngIf="unreadCount() > 0" class="notif-dot"></span>
           </button>
@@ -162,7 +162,7 @@ export class VideoCallComponent implements OnInit, OnDestroy {
     meetingTitle = signal('Meeting');
     socket!: Socket;
     stream!: MediaStream;
-    peers: any[] = [];
+    peers = signal<any[]>([]);
     peersRefs: any[] = [];
 
     // Controls
@@ -340,13 +340,16 @@ export class VideoCallComponent implements OnInit, OnDestroy {
                     peerID: user.socketId,
                     peer,
                     userName: user.userName,
-                    videoEnabled: true
+                    videoEnabled: true,
+                    audioEnabled: true
                 });
-                this.peers.push({
+                this.peers.update(prev => [...prev, {
                     peerID: user.socketId,
                     userName: user.userName,
-                    videoEnabled: true
-                });
+                    videoEnabled: true,
+                    audioEnabled: true,
+                    stream: null
+                }]);
             });
         });
 
@@ -356,13 +359,16 @@ export class VideoCallComponent implements OnInit, OnDestroy {
                 peerID: payload.callerId,
                 peer,
                 userName: payload.userName,
-                videoEnabled: true
+                videoEnabled: true,
+                audioEnabled: true
             });
-            this.peers.push({
+            this.peers.update(prev => [...prev, {
                 peerID: payload.callerId,
                 userName: payload.userName,
-                videoEnabled: true
-            });
+                videoEnabled: true,
+                audioEnabled: true,
+                stream: null
+            }]);
         });
 
         this.socket.on('receiving-returned-signal', (payload: any) => {
@@ -374,7 +380,7 @@ export class VideoCallComponent implements OnInit, OnDestroy {
             const peerObj = this.peersRefs.find(p => p.peerID === id);
             if (peerObj) peerObj.peer.destroy();
             this.peersRefs = this.peersRefs.filter(p => p.peerID !== id);
-            this.peers = this.peers.filter(p => p.peerID !== id);
+            this.peers.update(prev => prev.filter(p => p.peerID !== id));
         });
 
         this.socket.on('new-message', (msg: any) => {
@@ -383,10 +389,17 @@ export class VideoCallComponent implements OnInit, OnDestroy {
             setTimeout(() => this.scrollToBottom(), 100);
         });
 
-        // Listen for video toggle from others (placeholder for more advanced sync)
+        // Listen for video toggle from others
         this.socket.on('peer-video-toggle', ({ socketId, enabled }: any) => {
-            const peer = this.peers.find(p => p.peerID === socketId);
-            if (peer) peer.videoEnabled = enabled;
+            this.peers.update(prev => prev.map(p =>
+                p.peerID === socketId ? { ...p, videoEnabled: enabled } : p
+            ));
+        });
+
+        this.socket.on('peer-audio-toggle', ({ socketId, enabled }: any) => {
+            this.peers.update(prev => prev.map(p =>
+                p.peerID === socketId ? { ...p, audioEnabled: enabled } : p
+            ));
         });
     }
 
@@ -397,9 +410,10 @@ export class VideoCallComponent implements OnInit, OnDestroy {
             this.socket.emit('sending-offer', { userToSignal, callerId, signal, userName: this.authService.user().name });
         });
 
-        peer.on('stream', stream => {
-            const video = document.getElementById(userToSignal) as HTMLVideoElement;
-            if (video) video.srcObject = stream;
+        peer.on('stream', remoteStream => {
+            this.peers.update(prev => prev.map(p =>
+                p.peerID === userToSignal ? { ...p, stream: remoteStream } : p
+            ));
         });
 
         return peer;
@@ -412,9 +426,10 @@ export class VideoCallComponent implements OnInit, OnDestroy {
             this.socket.emit('returning-signal', { signal, callerId });
         });
 
-        peer.on('stream', stream => {
-            const video = document.getElementById(callerId) as HTMLVideoElement;
-            if (video) video.srcObject = stream;
+        peer.on('stream', remoteStream => {
+            this.peers.update(prev => prev.map(p =>
+                p.peerID === callerId ? { ...p, stream: remoteStream } : p
+            ));
         });
 
         peer.signal(incomingSignal);
@@ -424,6 +439,7 @@ export class VideoCallComponent implements OnInit, OnDestroy {
     toggleAudio() {
         this.audioEnabled = !this.audioEnabled;
         if (this.stream) this.stream.getAudioTracks().forEach(track => track.enabled = this.audioEnabled);
+        this.socket.emit('audio-toggle', { enabled: this.audioEnabled });
     }
 
     toggleVideo() {
@@ -478,11 +494,13 @@ export class VideoCallComponent implements OnInit, OnDestroy {
         this.newMessage = '';
     }
 
-    getUserColor(name: string = ''): string {
+    getUserColor(name: any = ''): string {
+        if (!name) return '#3b82f6';
         const colors = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899'];
         let hash = 0;
-        for (let i = 0; i < name.length; i++) {
-            hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        const nameStr = String(name);
+        for (let i = 0; i < nameStr.length; i++) {
+            hash = nameStr.charCodeAt(i) + ((hash << 5) - hash);
         }
         return colors[Math.abs(hash) % colors.length];
     }
