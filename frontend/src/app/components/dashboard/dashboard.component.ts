@@ -424,6 +424,7 @@ import { NotificationService } from '../../services/notification.service';
     .user-brief .role { font-size: 0.7rem; color: #64748b; text-transform: uppercase; }
     .view-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;}
     .legal-footer { margin-top: 5px; }
+    .mini-item { display: flex; justify-content: space-between;}
 
     /* Main Area */
     .dashboard-main { flex: 1; margin-left: 260px; padding: 2.5rem 3.5rem; min-height: 100vh; }
